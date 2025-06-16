@@ -41,7 +41,7 @@ Follow these steps to get VoiceBot running on your local machine.
 First, clone this repository to your local machine:
 
 ```bash
-git clone [https://github.com/diwakar-bhadriraju/VoiceBot.git](https://github.com/diwakar-bhadriraju/VoiceBot.git)
+git clone [https://github.com/diwakar-bhadriraju/VoiceBot.git]
 cd VoiceBot
 ````
 
@@ -175,5 +175,3 @@ You'll get a unique URL for your deployed VoiceBot\!
 ## 📄 License
 
 This project is open-source and available under the [MIT License](https://www.google.com/search?q=LICENSE).
-
-```

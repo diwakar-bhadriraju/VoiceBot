@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Talk with AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Variables for theming */
+        :root {
+            /* Light Mode Colors */
+            --bg-body: linear-gradient(135deg, #e0f7fa, #cfe9ff); /* Soft, calm gradient */
+            --bg-container: #ffffff;
+            --bg-container-before: #80cbc4;
+            --bg-container-after: #90caf9;
+            --text-heading: #263238;
+            --text-tagline: #607d8b;
+            --text-instruction: #78909c;
+            --btn-bg: linear-gradient(45deg, #42a5f5, #2196f3); /* Blue gradient */
+            --btn-shadow: rgba(66, 165, 245, 0.4);
+            --btn-hover-bg: linear-gradient(45deg, #2196f3, #1976d2);
+            --btn-listening-bg: linear-gradient(45deg, #ef5350, #d32f2f); /* Red gradient */
+            --btn-listening-shadow: rgba(239, 83, 80, 0.4);
+            --response-bg: #e3f2fd;
+            --response-border: #42a5f5;
+            --response-text: #263238;
+            --loader-border-top: #42a5f5;
+            --select-label-text: #546e7a;
+            --select-bg: #fcfdff;
+            --select-border: #bbdefb;
+            --select-focus-border: #42a5f5;
+            --select-focus-shadow: rgba(66, 165, 245, 0.2);
+            --voice-status-text: #ef5350; /* Red for warnings */
+            --toggle-icon-color: #607d8b;
+
+            /* Chat bubbles */
+            --user-bubble-bg: #bbdefb; /* Light blue */
+            --user-bubble-text: #263238;
+            --ai-bubble-bg: #e0e0e0; /* Light grey */
+            --ai-bubble-text: #263238;
+            --action-btn-bg: linear-gradient(45deg, #ff7043, #f4511e); /* Orange */
+            --action-btn-shadow: rgba(255, 112, 67, 0.3);
+        }
+
+        /* Dark Mode Colors */
+        body.dark-mode {
+            --bg-body: linear-gradient(135deg, #2c3e50, #0a1828); /* Darker blue-grey gradient */
+            --bg-container: #34495e;
+            --bg-container-before: #4db6ac; /* Lighter teal */
+            --bg-container-after: #64b5f6; /* Lighter blue */
+            --text-heading: #eceff1; /* Light grey */
+            --text-tagline: #b0bec5; /* Muted light grey */
+            --text-instruction: #90a4ae;
+            --btn-bg: linear-gradient(45deg, #64b5f6, #42a5f5); /* Brighter blue */
+            --btn-shadow: rgba(66, 165, 245, 0.3);
+            --btn-hover-bg: linear-gradient(45deg, #42a5f5, #2196f3);
+            --btn-listening-bg: linear-gradient(45deg, #ef9a9a, #ef5350); /* Lighter red */
+            --btn-listening-shadow: rgba(239, 83, 80, 0.3);
+            --response-bg: #455a64; /* Darker grey-blue */
+            --response-border: #64b5f6; /* Lighter blue accent */
+            --response-text: #e0f2f7;
+            --loader-border-top: #64b5f6;
+            --select-label-text: #b0bec5;
+            --select-bg: #455a64;
+            --select-border: #607d8b;
+            --select-focus-border: #64b5f6;
+            --select-focus-shadow: rgba(100, 181, 246, 0.2);
+            --voice-status-text: #ff8a80; /* Lighter red for warnings */
+            --toggle-icon-color: #fdd835; /* Yellow for moon */
+
+            /* Chat bubbles dark mode */
+            --user-bubble-bg: #42a5f5; /* Medium blue */
+            --user-bubble-text: #ffffff;
+            --ai-bubble-bg: #546e7a; /* Darker grey-blue */
+            --ai-bubble-text: #eceff1;
+            --action-btn-bg: linear-gradient(45deg, #ffab91, #ff7043); /* Lighter orange */
+            --action-btn-shadow: rgba(255, 171, 145, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-body);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: var(--text-heading); /* Default text color */
+            transition: background 0.5s ease; /* Smooth transition for background */
+        }
+        .container {
+            background: var(--bg-container);
+            padding: 40px;
+            border-radius: 18px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.5s ease, box-shadow 0.5s ease;
+        }
+        .container::before, .container::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            filter: blur(50px);
+            transition: background-color 0.5s ease;
+        }
+        .container::before {
+            width: 150px;
+            height: 150px;
+            background-color: var(--bg-container-before);
+            top: -50px;
+            left: -50px;
+        }
+        .container::after {
+            width: 200px;
+            height: 200px;
+            background-color: var(--bg-container-after);
+            bottom: -70px;
+            right: -70px;
+        }
+
+        h1 {
+            color: var(--text-heading);
+            margin-bottom: 10px;
+            font-size: 2.4rem;
+            font-weight: 700;
+            transition: color 0.5s ease;
+        }
+        .tagline {
+            color: var(--text-tagline);
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            transition: color 0.5s ease;
+        }
+        .instruction {
+            color: var(--text-instruction);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            transition: color 0.5s ease;
+        }
+        #talkBtn {
+            background: var(--btn-bg);
+            color: white;
+            border: none;
+            padding: 1.6rem 3.5rem;
+            font-size: 1.4rem;
+            border-radius: 60px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px var(--btn-shadow);
+            transition: transform 0.2s ease, box-shadow 0.3s ease, background 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+        }
+        #talkBtn.listening {
+            background: var(--btn-listening-bg);
+            box-shadow: 0 10px 25px var(--btn-listening-shadow);
+        }
+        #talkBtn:hover:not(.listening) {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px var(--btn-shadow); /* Use base shadow variable */
+            background: var(--btn-hover-bg);
+        }
+        #talkBtn:active {
+            transform: scale(0.97);
+            box-shadow: 0 6px 15px var(--btn-shadow);
+        }
+
+        /* Chat Log Container */
+        #response.chat-log {
+            margin-top: 20px;
+            padding: 15px; /* Slightly less padding to allow space for bubbles */
+            background: var(--response-bg);
+            border-radius: 10px;
+            font-size: 1.05rem;
+            color: var(--response-text);
+            text-align: left;
+            min-height: 60px;
+            line-height: 1.6;
+            overflow-y: auto; /* Enable scrolling for long chats */
+            max-height: 300px; /* Max height for the chat log */
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: background 0.5s ease, border-color 0.5s ease, color 0.5s ease;
+            display: flex; /* Use flexbox for chat bubbles */
+            flex-direction: column;
+        }
+
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 18px; /* More rounded */
+            margin-bottom: 12px; /* Space between bubbles */
+            max-width: 85%; /* Max width for readability */
+            word-wrap: break-word;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+            line-height: 1.5;
+            font-size: 1rem;
+        }
+
+        .user-bubble {
+            background-color: var(--user-bubble-bg);
+            color: var(--user-bubble-text);
+            margin-left: auto; /* Align to right */
+            margin-right: 0;
+            text-align: left; /* Text aligns left within bubble */
+            border-bottom-right-radius: 5px; /* Sharp corner on one side */
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        .ai-bubble {
+            background-color: var(--ai-bubble-bg);
+            color: var(--ai-bubble-text);
+            margin-right: auto; /* Align to left */
+            margin-left: 0;
+            text-align: left;
+            border-bottom-left-radius: 5px; /* Sharp corner on one side */
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid var(--loader-border-top);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-top: 25px;
+            transition: border-top-color 0.5s ease;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .voice-select-container {
+            margin-top: 15px;
+            text-align: left;
+            width: 100%;
+        }
+        .voice-select-container label {
+            font-size: 0.95rem;
+            color: var(--select-label-text);
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 600;
+            transition: color 0.5s ease;
+        }
+        #voiceSelect {
+            width: 100%;
+            padding: 12px 18px;
+            border-radius: 10px;
+            border: 1px solid var(--select-border);
+            font-size: 1rem;
+            background-color: var(--select-bg);
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23607d8b%22%20d%3D%22M287%2069.9a15.8%2015.8%200%200%200-11.2-4.6H16.6a15.8%2015.8%200%200%200-11.2%204.6c-6.1%206.1-6.1%2016.9%200%2023l129.2%20129.2c3.1%203.1%207.2%204.7%2011.3%204.7s8.2-1.6%2011.3-4.7l129.2-129.2c6.1-6.1%206.1-16.9%200-23z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 0.8em;
+            cursor: pointer;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.5s ease, color 0.5s ease;
+            color: var(--response-text); /* Ensure select text changes color too */
+        }
+        #voiceSelect:focus {
+            border-color: var(--select-focus-border);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--select-focus-shadow);
+        }
+        #voiceStatus {
+            font-size: 0.9rem;
+            color: var(--voice-status-text);
+            margin-top: 10px;
+            display: none; /* Hidden by default */
+            font-weight: 600;
+            transition: color 0.5s ease;
+        }
+
+        /* Dark Mode Toggle Button */
+        #themeToggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: var(--toggle-icon-color);
+            transition: color 0.5s ease, transform 0.2s ease;
+            padding: 5px; /* Increase clickable area */
+            border-radius: 50%; /* Make it round */
+        }
+        #themeToggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* Clear History Button */
+        #clearHistoryBtn {
+            background: var(--action-btn-bg);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px var(--action-btn-shadow);
+            transition: transform 0.2s ease, box-shadow 0.3s ease, background 0.3s ease;
+            margin-top: 15px; /* Space from other elements */
+        }
+        #clearHistoryBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--action-btn-shadow);
+        }
+        #clearHistoryBtn:active {
+            transform: scale(0.98);
+            box-shadow: 0 3px 10px var(--action-btn-shadow);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="themeToggle" aria-label="Toggle dark mode">🌙</button>
+
+        <h1>🗣️ Talk with AI</h1>
+        <p class="tagline">Your intelligent conversational assistant.</p>
+        <p class="instruction">Click to start speaking. Click again to stop, or it will stop automatically after a pause.</p>
+
+        <button id="talkBtn">Start Conversation</button>
+
+        <div class="voice-select-container">
+            <label for="voiceSelect">Choose Voice:</label>
+            <select id="voiceSelect"></select>
+            <p id="voiceStatus"></p>
+        </div>
+
+        <div id="response" class="chat-log">
+            <div class="ai-bubble">Hello! How can I help you today?</div>
+        </div>
+
+        <div id="loader" class="loader" style="display: none;"></div>
+        
+        <button id="clearHistoryBtn">Clear Conversation</button>
+    </div>
+
+    <script>
+        const button = document.getElementById("talkBtn");
+        const responseEl = document.getElementById("response");
+        const loader = document.getElementById("loader");
+        const voiceSelect = document.getElementById("voiceSelect");
+        const voiceStatusEl = document.getElementById("voiceStatus");
+        const themeToggle = document.getElementById("themeToggle");
+        const clearHistoryBtn = document.getElementById("clearHistoryBtn"); // New button
+
+        const synth = window.speechSynthesis;
+        let voices = [];
+        let selectedVoice = null;
+        let isListening = false;
+
+        // --- Chat History ---
+        let chatHistory = [{ role: "assistant", content: "Hello! How can I help you today?" }]; // Initialize with AI greeting
+
+        // Function to display chat history in the UI
+        function displayChatHistory() {
+            responseEl.innerHTML = ''; // Clear current display
+            chatHistory.forEach(message => {
+                const bubble = document.createElement('div');
+                bubble.classList.add('message-bubble');
+                if (message.role === 'user') {
+                    bubble.classList.add('user-bubble');
+                    bubble.textContent = `You: ${message.content}`;
+                } else {
+                    bubble.classList.add('ai-bubble');
+                    bubble.textContent = `AI: ${message.content}`;
+                }
+                responseEl.appendChild(bubble);
+            });
+            // Scroll to the bottom of the chat log
+            responseEl.scrollTop = responseEl.scrollHeight;
+        }
+
+        // --- Dark Mode Logic ---
+        const applyTheme = (theme) => {
+            document.body.classList.toggle('dark-mode', theme === 'dark');
+            themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', theme);
+        };
+
+        // Initialize theme on load
+        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        applyTheme(savedTheme);
+
+        // Toggle theme on button click
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+            applyTheme(currentTheme === 'light' ? 'dark' : 'light');
+        });
+        // --- End Dark Mode Logic ---
+
+        // Function to populate voice options
+        function populateVoiceList() {
+            voices = synth.getVoices().sort((a, b) => {
+                const nameA = a.name.toUpperCase();
+                const nameB = b.name.toUpperCase();
+                if (nameA < nameB) return -1;
+                if (nameA > nameB) return 1;
+                return 0;
+            });
+
+            voiceSelect.innerHTML = ''; // Clear existing options
+            voiceStatusEl.style.display = 'none'; // Hide status message initially
+
+            const enVoices = voices.filter(voice => voice.lang.startsWith('en'));
+
+            // Prioritize common natural-sounding English voices
+            const preferredVoiceNames = [
+                'Google US English', // Often the best on Chrome/Edge
+                'Microsoft Zira - English (United States)', // Common on Windows
+                'Microsoft David - English (United States)', // Common on Windows
+                'Samantha', // macOS
+                'Alex'      // macOS
+            ];
+
+            let defaultVoiceSet = false;
+            let foundNaturalVoice = false; // Track if a natural voice was found
+
+            // Add preferred voices first and try to set default
+            for (const name of preferredVoiceNames) {
+                const voice = enVoices.find(v => v.name === name);
+                if (voice) {
+                    const option = document.createElement('option');
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    option.setAttribute('data-name', voice.name);
+                    voiceSelect.appendChild(option);
+                    if (!defaultVoiceSet) {
+                        selectedVoice = voice;
+                        voiceSelect.value = `${voice.name} (${voice.lang})`;
+                        defaultVoiceSet = true;
+                        foundNaturalVoice = true; // Mark that a good voice was found
+                    }
+                }
+            }
+
+            // Add remaining English voices
+            enVoices.forEach(voice => {
+                // Only add if not already added by preferred list
+                if (!voiceSelect.querySelector(`option[data-name="${voice.name}"]`)) {
+                    const option = document.createElement('option');
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    option.setAttribute('data-name', voice.name);
+                    voiceSelect.appendChild(option);
+                    if (!defaultVoiceSet && voice.lang === 'en-US') { // Fallback to first en-US if no preferred set
+                        selectedVoice = voice;
+                        voiceSelect.value = `${voice.name} (${voice.lang})`;
+                        defaultVoiceSet = true;
+                    }
+                }
+            });
+
+            // Fallback if no specific default voice was set, and voices are available
+            if (!defaultVoiceSet && voices.length > 0) {
+                 selectedVoice = voices[0];
+                 voiceSelect.value = `${selectedVoice.name} (${selectedVoice.lang})`;
+            }
+
+            // Display status messages if voices are problematic
+            if (voices.length === 0) {
+                voiceStatusEl.textContent = "No speech voices found. Please ensure your browser and OS support speech synthesis.";
+                voiceStatusEl.style.display = 'block';
+                voiceSelect.innerHTML = '<option value="">No voices available</option>';
+                voiceSelect.disabled = true; // Disable select if no voices
+                console.warn("No speech synthesis voices found.");
+            } else if (!foundNaturalVoice) {
+                voiceStatusEl.textContent = "High-quality 'natural' voices may require Chrome/Edge and an internet connection.";
+                voiceStatusEl.style.display = 'block';
+                console.warn("Could not find common natural voices like Google US English or Microsoft Zira/David.");
+            } else {
+                voiceSelect.disabled = false; // Ensure enabled if voices are found
+            }
+        }
+
+        // Call populateVoiceList immediately and set up event listener
+        if (synth.getVoices().length === 0) {
+            synth.onvoiceschanged = populateVoiceList;
+            setTimeout(populateVoiceList, 500); // Try after a short delay too for initial load
+        } else {
+            populateVoiceList();
+        }
+
+        // Event listener for voice selection change
+        voiceSelect.addEventListener('change', () => {
+            const selectedName = voiceSelect.options[voiceSelect.selectedIndex].getAttribute('data-name');
+            selectedVoice = voices.find(voice => voice.name === selectedName);
+        });
+
+        let recognition;
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+            recognition.continuous = false; // Crucial: stops after a pause in speech
+        } else {
+            alert('Speech recognition is not supported in this browser. Please try Chrome or Edge for the best experience.');
+        }
+
+        // Handle button click (toggle start/stop)
+        button.addEventListener('click', () => {
+            if (!recognition) return;
+
+            if (isListening) {
+                recognition.stop();
+                // No immediate UI update here, wait for onresult/onerror/onend
+                // The loader and processing message will be handled by displayChatHistory
+            } else {
+                displayChatHistory(); // Show current history before new input
+                const thinkingBubble = document.createElement('div');
+                thinkingBubble.classList.add('ai-bubble');
+                thinkingBubble.textContent = 'AI: Listening...'; // Placeholder for listening
+                responseEl.appendChild(thinkingBubble);
+                responseEl.scrollTop = responseEl.scrollHeight;
+
+                loader.style.display = 'block';
+                button.textContent = 'Stop Listening';
+                button.classList.add('listening');
+                isListening = true;
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error("Speech recognition start error:", e);
+                    const errorBubble = document.createElement('div');
+                    errorBubble.classList.add('ai-bubble');
+                    errorBubble.textContent = "AI: Error starting speech recognition. Check microphone permissions.";
+                    responseEl.appendChild(errorBubble);
+                    responseEl.scrollTop = responseEl.scrollHeight;
+
+                    loader.style.display = 'none';
+                    button.textContent = 'Start Conversation';
+                    button.classList.remove('listening');
+                    isListening = false;
+                }
+            }
+        });
+
+        recognition.onresult = async function(event) {
+            const userInput = event.results[0][0].transcript;
+            
+            // Remove the "AI: Listening..." placeholder before adding actual user message
+            if (responseEl.lastChild && responseEl.lastChild.textContent === 'AI: Listening...') {
+                responseEl.removeChild(responseEl.lastChild);
+            }
+
+            chatHistory.push({ role: "user", content: userInput }); // Add user message to history
+            displayChatHistory(); // Update UI with user message
+            
+            const thinkingBubble = document.createElement('div');
+            thinkingBubble.classList.add('ai-bubble');
+            thinkingBubble.textContent = `AI: Processing "${userInput}"...`; // AI thinking indicator
+            responseEl.appendChild(thinkingBubble);
+            responseEl.scrollTop = responseEl.scrollHeight;
+
+
+            // Reset listening state as speech input is done
+            isListening = false;
+            button.textContent = 'Start Conversation';
+            button.classList.remove('listening');
+
+            try {
+                const res = await fetch("/ask", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ messages: chatHistory }) // Send the whole history
+                });
+
+                const data = await res.json();
+                loader.style.display = "none";
+
+                // Remove the "AI: Processing..." placeholder
+                if (responseEl.lastChild && responseEl.lastChild.textContent.startsWith('AI: Processing')) {
+                    responseEl.removeChild(responseEl.lastChild);
+                }
+
+
+                let aiReply = data.reply;
+                // --- Process AI reply for laughter and other modulations ---
+                aiReply = aiReply.replace(/😂|🤣|😄|😊|😇/g, '(chuckles)');
+
+                chatHistory.push({ role: "assistant", content: aiReply }); // Add AI message to history
+                displayChatHistory(); // Update UI with AI message
+
+                const utter = new SpeechSynthesisUtterance(aiReply);
+                if (selectedVoice) {
+                    utter.voice = selectedVoice;
+                }
+                utter.pitch = 1;
+                utter.rate = 1;
+                utter.volume = 1;
+
+                utter.onerror = (e) => {
+                    console.error('SpeechSynthesisUtterance error:', e);
+                    if (e.error === 'synthesis-failed' || e.error === 'network' || e.error === 'not-allowed') {
+                        // Add an error message as a new AI bubble
+                        chatHistory.push({ role: "assistant", content: `AI: Error synthesizing voice. Try a different voice or reload. (Error: ${e.error})` });
+                        displayChatHistory();
+                    }
+                };
+                synth.speak(utter);
+
+            } catch (err) {
+                loader.style.display = "none";
+                console.error("Backend communication error:", err);
+                // Remove the "AI: Processing..." placeholder if it's still there due to error
+                if (responseEl.lastChild && responseEl.lastChild.textContent.startsWith('AI: Processing')) {
+                    responseEl.removeChild(responseEl.lastChild);
+                }
+
+                let errorMessage = "AI: Error communicating with the AI. Please check your backend server.";
+                // Try to parse error response from backend
+                if (err.response && err.response.json) {
+                    try {
+                        const errorData = await err.response.json();
+                        if (errorData.error === "rate_limited") {
+                            errorMessage = `AI: ${errorData.reply}`;
+                        } else if (errorData.reply) {
+                            errorMessage = `AI: ${errorData.reply}`;
+                        }
+                    } catch (parseError) {
+                        console.error("Failed to parse error response:", parseError);
+                    }
+                }
+                chatHistory.push({ role: "assistant", content: errorMessage });
+                displayChatHistory();
+            }
+        };
+
+        recognition.onerror = function (event) {
+            loader.style.display = "none";
+            button.textContent = 'Start Conversation';
+            button.classList.remove('listening');
+            isListening = false; // Reset state
+
+            // Remove the "AI: Listening..." placeholder
+            if (responseEl.lastChild && responseEl.lastChild.textContent === 'AI: Listening...') {
+                responseEl.removeChild(responseEl.lastChild);
+            }
+
+            let errorMessage = "AI: Speech recognition error occurred.";
+            if (event.error === 'no-speech') {
+                errorMessage = "AI: No speech detected. Please try speaking louder or clearer.";
+            } else if (event.error === 'not-allowed') {
+                errorMessage = "AI: Microphone access denied. Please allow microphone access in your browser settings.";
+            } else if (event.error === 'network') {
+                errorMessage = "AI: Network error during speech recognition. Check your internet connection.";
+            } else if (event.error === 'audio-capture') {
+                errorMessage = "AI: Audio capture error. Ensure microphone is connected and working.";
+            }
+            console.error("Speech recognition error event:", event);
+
+            chatHistory.push({ role: "assistant", content: errorMessage });
+            displayChatHistory();
+        };
+
+        recognition.onend = () => {
+            // This fires when the recognition service has disconnected (either manually stopped, or after silence)
+            if (isListening) { // If it was still in 'listening' state when onend fired
+                isListening = false;
+                button.textContent = 'Start Conversation';
+                button.classList.remove('listening');
+                loader.style.display = 'none'; // Ensure loader is hidden
+
+                // If "AI: Listening..." placeholder is still there (meaning no speech was recognized/onresult didn't fire)
+                if (responseEl.lastChild && responseEl.lastChild.textContent === 'AI: Listening...') {
+                     responseEl.removeChild(responseEl.lastChild);
+                     chatHistory.push({ role: "assistant", content: "AI: Speech recognition ended. No voice input received." });
+                     displayChatHistory();
+                }
+            }
+            // If the button was clicked to stop, onresult or onerror would have already handled the UI.
+            // This 'onend' mainly serves as a cleanup for automatic stops without result.
+        };
+
+        // --- Clear History Button Event Listener ---
+        clearHistoryBtn.addEventListener('click', () => {
+            chatHistory = [{ role: "assistant", content: "Hello! How can I help you today?" }]; // Reset to initial greeting
+            displayChatHistory(); // Update UI
+            if (synth.speaking) {
+                synth.cancel(); // Stop any ongoing speech
+            }
+            loader.style.display = 'none'; // Ensure loader is hidden
+            button.textContent = 'Start Conversation';
+            button.classList.remove('listening');
+            isListening = false;
+        });
+
+        // Initial display of the greeting message when page loads
+        displayChatHistory();
+
+    </script>
+</body>
+</html>

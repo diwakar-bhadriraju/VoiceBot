@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "dotenv": "npm:dotenv@^16.5.0",
+    "oak": "npm:oak@^9.0.0"
+  }
+}
